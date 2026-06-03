@@ -156,3 +156,104 @@ def test_debug_fast_modular():
     print(fast_modular(2, 10, 1000))
 
     assert fast_modular(2, 10, 1000) == 24
+
+
+from sympy import isprime
+
+from elgamal import gen_prime, key
+
+
+# ----------------------------
+# gen_prime tests
+# ----------------------------
+
+def test_gen_prime_returns_prime():
+    p = gen_prime(bits=8, k=10)
+
+    # sympy.isprime is our trusted checker
+    assert isprime(p)
+
+
+def test_gen_prime_has_correct_bit_length():
+    bits = 8
+
+    p = gen_prime(bits=bits, k=10)
+
+    # If we ask for 8 bits, we expect an 8-bit number
+    assert p.bit_length() == bits
+
+
+def test_gen_prime_returns_odd_number():
+    p = gen_prime(bits=8, k=10)
+
+    # Every prime bigger than 2 is odd
+    assert p % 2 == 1
+
+
+def test_gen_prime_rejects_too_few_bits():
+    try:
+        gen_prime(bits=2)
+        assert False  # should not reach this line
+    except ValueError:
+        assert True
+
+
+
+from sympy import isprime
+
+from elgamal import key
+
+
+# ----------------------------
+# generate_key tests
+# ----------------------------
+
+def test_generate_key_returns_key_object():
+    private_key = key.generate_key(bits=8)
+
+    assert isinstance(private_key, key)
+
+
+def test_generate_key_generates_prime_p():
+    private_key = key.generate_key(bits=8)
+
+    assert isprime(private_key.p)
+
+
+def test_generate_key_p_has_correct_bit_length():
+    bits = 8
+
+    private_key = key.generate_key(bits=bits)
+
+    assert private_key.p.bit_length() == bits
+
+
+def test_generate_key_private_x_is_in_valid_range():
+    private_key = key.generate_key(bits=8)
+
+    # x should be between 1 and p - 2
+    assert 1 <= private_key._x <= private_key.p - 2
+
+
+def test_generate_key_public_A_is_correct():
+    private_key = key.generate_key(bits=8)
+
+    expected_A = pow(private_key.g, private_key._x, private_key.p)
+
+    assert private_key.A == expected_A
+
+
+def test_generate_key_g_is_not_zero_mod_p():
+    private_key = key.generate_key(bits=8)
+
+    assert private_key.g % private_key.p != 0
+
+def test_generated_key_can_encrypt_and_decrypt():
+    private_key = key.generate_key(bits=64)
+
+    message = "hi"
+
+    a, b = key.encrypt(private_key, message)
+    decrypted = private_key.decrypt(a, b)
+
+    assert decrypted == message

@@ -3,8 +3,6 @@ import random
 import math
 
 def extended_euclid(a,b):
-    if a<b: 
-        a, b = b, a 
     if b == 0:
         return (a,1,0)
     q = a // b
@@ -48,7 +46,7 @@ def not_prime(x,p):
     exp = exp // 2
     while exp % 2 != 0:
         c = fast_modular(x, exp, p)
-        if c != 1 or c != -1: return True 
+        if c != 1 and c != -1: return True 
         elif c == 1:
             exp = exp // 2
             continue
@@ -63,9 +61,9 @@ def gen_prime(bits = 8, k:int = 5, q:float = 0.25): #so k is a paramter of how s
     t = math.ceil(-k / math.log2(q))
 
     while True:
-        p = 0
-        while p % 2 == 0:# the number we are trying to test for prime
-            p = random.getrandbits(bits)
+        p = random.getrandbits(bits)
+        p |= (1 << (bits - 1))
+        p |= 1
         
         i = 0
         while i < t:
@@ -91,16 +89,19 @@ class key:
         self.A = fast_modular(g, x, p) 
 
     @classmethod
-    def generate_key(cls):
-        
-        pass #need to generate prime numbers
+    def generate_key(cls,bits=64):
+        p = gen_prime(bits)
+        g = 2
+        x = random.randint(1, p - 2)
+        return cls(x, g, p)
 
     def decrypt(self, a, b):
         shared = fast_modular(a, self._x, self.p)
-        hcf, i, j = extended_euclid(self.p, shared)
+        hcf, i, _ = extended_euclid(shared, self.p)
         if hcf != 1:
             raise Exception("shared is not coprime with p, which is bad")
-        message = (b * j) % self.p
+        inverse = i % self.p
+        message = (b * inverse) % self.p
         return int_to_string(message)
 
     @staticmethod
