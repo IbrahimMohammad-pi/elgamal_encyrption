@@ -16,14 +16,20 @@ def extended_euclid(a,b):
 def elgamal(p,):
     pass 
 
-def fast_modular(base:int,exp:int,p:int):
+def fast_modular(base: int, exp: int, p: int):
+    base %= p
+
     if exp == 0:
         return 1
-    odd = exp % 2
-    extra = base * odd 
-    exp = exp - odd
+
+    odd = exp & 1
+    extra = 1 + (base - 1) * odd
+
+    exp -= odd
+
     t = fast_modular(base, exp // 2, p)
-    return (extra * (t**2) % p) 
+
+    return (extra * (t * t % p)) % p
 
 def string_to_int(message: str) -> int:
     return int.from_bytes(message.encode("utf-8"), byteorder="big")
@@ -91,10 +97,10 @@ class key:
 
     def decrypt(self, a, b):
         shared = fast_modular(a, self._x, self.p)
-        hcf, i, _ = extended_euclid(shared, self.p)
+        hcf, i, j = extended_euclid(self.p, shared)
         if hcf != 1:
             raise Exception("shared is not coprime with p, which is bad")
-        message = (b * i) % self.p
+        message = (b * j) % self.p
         return int_to_string(message)
 
     @staticmethod
