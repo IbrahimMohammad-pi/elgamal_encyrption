@@ -7,11 +7,10 @@ def extended_euclid(a,b):
         a, b = b, a 
     if b == 0:
         return (a,1,0)
-    q = a // b 
-    r = a % b 
-    hcf, i, j = extended_euclid(b, a % b)
-
-    return extended_euclid(hcf, j, i - j*q)
+    q = a // b
+    r = a % b
+    hcf, i, j = extended_euclid(b, r)
+    return hcf, j, i - j * q
 
 
 def elgamal(p,):
@@ -90,23 +89,23 @@ class key:
         
         pass #need to generate prime numbers
 
-    def decrypt(self,a,b):
-        shared = fast_modular(self.g, self._x, self.p)
-        hcf, i, _ = extended_euclid(shared, self.x)
+    def decrypt(self, a, b):
+        shared = fast_modular(a, self._x, self.p)
+        hcf, i, _ = extended_euclid(shared, self.p)
         if hcf != 1:
-            raise Exception("shared is not coprime with p which is bad")
-        message = (b * i) % self.p 
+            raise Exception("shared is not coprime with p, which is bad")
+        message = (b * i) % self.p
         return int_to_string(message)
 
     @staticmethod
-    def encrypt(public_key: key, message_string):
+    def encrypt(public_key, message_string):
         message = string_to_int(message_string)
-        if message > public_key.p:
+        if message >= public_key.p:
             raise ValueError("message is too big for p")
-        k = 17 #for now use this. we just need a random k.
+        k = 17  # for now use this. we just need a random k.
         a = fast_modular(public_key.g, k, public_key.p)
         b = (message * fast_modular(public_key.A, k, public_key.p)) % public_key.p
-        return a, b 
+        return a, b
 
 
 
